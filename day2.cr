@@ -23,6 +23,15 @@ input.each do |i|
       .map(&.[1]).join
     puts "part2"
     puts common
-    exit
+    break
   end
 end
+
+# part2 alternative:
+common = input.map(&.chars).each_combination(2).map do |(i1, i2)|
+  i1.zip(i2)
+    .select { |(a, b)| a == b }
+    .map(&.[1]).join
+end.max_by &.size
+puts "part2alt"
+puts common
