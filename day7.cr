@@ -32,7 +32,6 @@ puts res.join
 
 depends_on = dependencies(deps)
 current_time = 0i64
-i = 0
 jobs = depends_on.select { |a, ds| ds.empty? }.keys.sort
 workings = [] of Tuple(Int64, String)
 
