@@ -9,10 +9,7 @@ def consume(input, &block : Array(Int32), Array(Int32) -> Int32)
   children = child_nodes.times.map do
     consume(input, &block).as(Int32)
   end.to_a
-  meta = metadata.times.map do
-    input.shift
-  end.to_a
-  block.call(children, meta)
+  block.call(children, input.shift(metadata))
 end
 
 puts "part1"
