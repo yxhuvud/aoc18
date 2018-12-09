@@ -1,5 +1,3 @@
-# 424 players; last marble is worth 71144 points
-
 def play(players, stop)
   marbles = 2..stop
   scores = [0_i64] * players
@@ -7,9 +5,8 @@ def play(players, stop)
   marbles.each do |i|
     if i % 23 == 0
       current = (i % players)
-      scores[current] += i
       circle.rotate!(-7)
-      scores[current] += circle.shift
+      scores[current] += circle.shift + i
     else
       circle.rotate!(2)
       circle.unshift i
