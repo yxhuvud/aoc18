@@ -4,9 +4,8 @@ def play(players, stop)
   circle = Deque(Int32).new([1, 0])
   marbles.each do |i|
     if i % 23 == 0
-      current = (i % players)
       circle.rotate!(-7)
-      scores[current] += circle.shift + i
+      scores[i % players] += circle.shift + i
     else
       circle.rotate!(2)
       circle.unshift i
