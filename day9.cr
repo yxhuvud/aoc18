@@ -9,8 +9,7 @@ def play(players, stop)
       current = (i % players)
       scores[current] += i
       circle.rotate!(-7)
-      removed = circle.shift
-      scores[current] += removed
+      scores[current] += circle.shift
     else
       circle.rotate!(2)
       circle.unshift i
