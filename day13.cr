@@ -1,21 +1,9 @@
 input =
   File.read("day13.input")
 
-# input =
-#   <<-EOS
-# /->-\\         
-# |   |  /----\\ 
-# | /-+--+-\\  | 
-# | | |  | v  | 
-# \\-+-/  \\-+--/ 
-#   \\------/    
-# EOS
-
-#raise "hell" unless input.lines.map(&.size).uniq.size == 1
-
 record(Pos, x : Int32, y : Int32) do
   include Comparable(self)
-  
+
   def next(dir)
     case dir
     when '<'
@@ -37,24 +25,39 @@ record(Pos, x : Int32, y : Int32) do
   end
 end
 
-record(Cart, at : Pos, dir : Char, turning : Int32) do
-  def mark(cartmap, v)
-    if v && cartmap[at.x][at.y]?
-      raise "#{at.y},#{at.x}"
+class Cart
+  property at : Pos
+  property dir : Char
+  property turning : Int32
+
+  def initialize(@at, @dir, @turning)
+  end
+
+  def unmark(cartmap)
+    cartmap[at.x][at.y] = nil
+  end
+
+  def mark(collisions, cartmap)
+    if other = cartmap[at.x][at.y]?
+      collisions << self
+      collisions << other
+      cartmap[at.x][at.y] = nil
+      false
     else
-      cartmap[at.x][at.y] = v
+      cartmap[at.x][at.y] = self
+      true
     end
   end
+
+  def to_s
+    {at.y, at.x}.join(",")
+  end
 end
-
-
-alias Connection = Tuple(Pos, Pos)
+collisions = Array(Cart).new
 
 carts = Array(Cart).new
-connections = Set(Connection).new
 map = Array(Array(Char)).new
 
-maxx, maxy = 0, 0
 input.lines.each_with_index do |l, x|
   cur = Array(Char).new
   map << cur
@@ -69,13 +72,11 @@ input.lines.each_with_index do |l, x|
       r = '|'
     end
     cur << r
-    maxx = {maxx,x}.max
-    maxy = {maxy,y}.max
   end
 end
 
-cartmap = Array(Array(Bool)).new(maxx+1) { Array(Bool).new(maxy+1) {false} }
-carts.each do |c| c.mark(cartmap, true) end
+cartmap = Array(Array(Cart|Nil)).new(map.size) { Array(Cart|Nil).new(map[0].size){ nil } }
+carts.each { |c| c.mark(collisions, cartmap) }
 
 def neighbors(dir : Char)
   if dir == '>'
@@ -94,10 +95,10 @@ end
 def turn(n, dir, turning)
   case n
   when '+'
-    dir = neighbors(dir)[turning] 
+    dir = neighbors(dir)[turning]
     turning = (turning + 1) % 3
   when '\\'
-    dir = 
+    dir =
       case dir
       when '>'
         'v'
@@ -111,7 +112,7 @@ def turn(n, dir, turning)
         raise "hell4"
       end
   when '/'
-    dir = 
+    dir =
       case dir
       when '>'
         '^'
@@ -130,13 +131,23 @@ end
 
 loop do
   carts.each_with_index do |c, i|
+    next if collisions.includes?(c)
+    c.unmark(cartmap)
     next_pos = c.at.next(c.dir)
-    c.mark(cartmap, false)
     next_dir, turning = turn(map[next_pos.x][next_pos.y], c.dir, c.turning)
-    new_c = Cart.new(next_pos, next_dir, turning )
-#    puts "moving cart #{c.inspect} #{new_c.inspect}"
-    new_c.mark(cartmap, true)
-    carts[i] = new_c
+    c.at = next_pos
+    c.dir = next_dir
+    c.turning = turning
+    c.mark(collisions, cartmap)
+    carts[i] = c
   end
-  carts.sort_by &.at
+  carts -= collisions
+  carts.sort_by! &.at
+  if carts.size <= 1
+    puts carts.map(&.to_s).join
+    exit
+  end
 end
+
+# fails:
+# 18,58
