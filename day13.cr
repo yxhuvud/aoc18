@@ -6,16 +6,10 @@ record(Pos, x : Int32, y : Int32) do
 
   def next(dir)
     case dir
-    when '<'
-      Pos.new(x, y-1)
-    when '>'
-      Pos.new(x, y+1)
-    when 'v'
-      Pos.new(x+1, y)
-    when '^'
-      Pos.new(x-1, y)
-    else
-      raise "hell1"
+    when '<' then Pos.new(x, y - 1)
+    when '>' then Pos.new(x, y + 1)
+    when 'v' then Pos.new(x + 1, y)
+    else          Pos.new(x - 1, y)
     end
   end
 
@@ -42,10 +36,8 @@ class Cart
       collisions << self
       collisions << other
       cartmap[at.x][at.y] = nil
-      false
     else
       cartmap[at.x][at.y] = self
-      true
     end
   end
 
@@ -53,7 +45,6 @@ class Cart
     {at.y, at.x}.join(",")
   end
 end
-collisions = Array(Cart).new
 
 carts = Array(Cart).new
 map = Array(Array(Char)).new
@@ -62,7 +53,7 @@ input.lines.each_with_index do |l, x|
   cur = Array(Char).new
   map << cur
   l.chars.each_with_index do |r, y|
-    pos = Pos.new(x,y)
+    pos = Pos.new(x, y)
     case r
     when '>', '<'
       carts << Cart.new(pos, r, 0)
@@ -75,20 +66,14 @@ input.lines.each_with_index do |l, x|
   end
 end
 
-cartmap = Array(Array(Cart|Nil)).new(map.size) { Array(Cart|Nil).new(map[0].size){ nil } }
-carts.each { |c| c.mark(collisions, cartmap) }
+cartmap = Array(Array(Cart | Nil)).new(map.size) { Array(Cart | Nil).new(map[0].size) { nil } }
 
 def neighbors(dir : Char)
-  if dir == '>'
-    {'^','>','v' }
-  elsif dir == '<'
-    { 'v', '<', '^' }
-  elsif dir == 'v'
-    {'>', 'v','<' }
-  elsif dir == '^'
-    { '<', '^', '>' }
-  else
-    raise "hell3"
+  case dir
+  when '>' then {'^', '>', 'v'}
+  when '<' then {'v', '<', '^'}
+  when 'v' then {'>', 'v', '<'}
+  else          {'<', '^', '>'}
   end
 end
 
@@ -100,30 +85,18 @@ def turn(n, dir, turning)
   when '\\'
     dir =
       case dir
-      when '>'
-        'v'
-      when '<'
-        '^'
-      when '^'
-        '<'
-      when 'v'
-        '>'
-      else
-        raise "hell4"
+      when '>' then 'v'
+      when '<' then '^'
+      when '^' then '<'
+      else          '>'
       end
   when '/'
     dir =
       case dir
-      when '>'
-        '^'
-      when '<'
-        'v'
-      when '^'
-        '>'
-      when 'v'
-        '<'
-      else
-        raise "hell5"
+      when '>' then '^'
+      when '<' then 'v'
+      when '^' then '>'
+      else          '<'
       end
   end
   {dir, turning}
@@ -131,16 +104,14 @@ end
 
 first = nil
 second = nil
+collisions = Array(Cart).new
 
 loop do
   carts.each_with_index do |c, i|
     next if collisions.includes?(c)
     c.unmark(cartmap)
-    next_pos = c.at.next(c.dir)
-    next_dir, turning = turn(map[next_pos.x][next_pos.y], c.dir, c.turning)
-    c.at = next_pos
-    c.dir = next_dir
-    c.turning = turning
+    c.at = c.at.next(c.dir)
+    c.dir, c.turning = turn(map[c.at.x][c.at.y], c.dir, c.turning)
     first ||= c.to_s unless c.mark(collisions, cartmap)
     carts[i] = c
   end
