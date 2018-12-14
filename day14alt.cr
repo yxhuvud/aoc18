@@ -6,7 +6,7 @@ exp = 10 ** (target_size - 1)
 start = [3, 7, 1, 0, 1, 0] of Int8 # precalculate first to allow for % optimization.
 first, second = 4, 3
 receipes = Array(Int8).new(initial_capacity: 30_000_000)
-start.each { |i| receipes.push i } # this preallocation gain some 30ms compared to using the start literal.
+receipes.concat start # Above preallocation gain some 30ms compared to using the start literal.
 cur = start.last(input.size).join.to_i
 
 loop do
