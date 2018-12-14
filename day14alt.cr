@@ -1,27 +1,23 @@
 input = "074501"
-start = [3, 7, 1, 0, 1, 0] of Int8 # precalculate first to allow for % optimization.
 target = input.to_i
+target_size = input.size
+exp = 10 ** (target_size - 1)
 
+start = [3, 7, 1, 0, 1, 0] of Int8 # precalculate first to allow for % optimization.
 first, second = 4, 3
 receipes = Array(Int8).new(initial_capacity: 30_000_000)
 start.each { |i| receipes.push i } # this preallocation gain some 30ms compared to using the start literal.
 cur = start.last(input.size).join.to_i
-target_size = input.size
-exp = 10 ** (target_size - 1)
 
-def calc(cur, n, receipes, size, exp) : Int32
-  (cur - exp * receipes[-size]) * 10 + n
-end
-
-21_000_000.times do
+loop do
   receipt = receipes[first] + receipes[second]
   if receipt >= 10
-    cur = calc(cur, 1, receipes, target_size, exp)
+    cur = (cur - exp * receipes[-target_size]) * 10 + 1
     receipes.push(1_i8)
     break if cur == target
     receipt -= 10
   end
-  cur = calc(cur, receipt, receipes, target_size, exp)
+  cur = (cur - exp * receipes[-target_size]) * 10 + receipt
   receipes.push(receipt)
   break if cur == target
   first += 1 + receipes[first]
