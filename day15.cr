@@ -12,25 +12,33 @@ class Actor
   def to_s
     t
   end
+
+  def enemy?(other)
+    other.t != t
+  end
 end
 
 alias Pos = Tuple(Int32, Int32)
-map = Hash(Pos, Char).new
 
 def enemies(fighters, t)
   fighters.select { |_, t2| t != t2.t }
 end
 
-def neighbours(map, pos : Pos, wanted_type)
+def neighbours(pos)
   { {pos[0] - 1, pos[1]}, {pos[0] + 1, pos[1]}, {pos[0], pos[1] - 1}, {pos[0], pos[1] + 1} }
-    .select { |p| map[p]? ? map[p].t == wanted_type : false }
-    .map { |p| {p, map[p]} }
+end
+
+def adjacent_enemies(fighters, pos : Pos, actor)
+  neighbours(pos).compact_map do |p|
+    (e = fighters[p]?) &&
+      e.enemy?(actor) ? {p, e} : nil
+  end
 end
 
 def free_neighbours(map, fighters, pos : Pos)
-  { {pos[0] - 1, pos[1]}, {pos[0] + 1, pos[1]}, {pos[0], pos[1] - 1}, {pos[0], pos[1] + 1} }
+  neighbours(pos)
     .reject { |p| fighters[p]? }
-    .select { |p| map[p]? == '.' }
+    .select! { |p| map[p]? == '.' }
 end
 
 def pathto(map, fighters, from : Pos, targets)
@@ -46,11 +54,12 @@ def pathto(map, fighters, from : Pos, targets)
     if targets.includes? curr
       options << {curr, orig, dist}
     else
-      queue.concat free_neighbours(map, fighters, curr)
-        .reject { |p| seen.includes?({p, orig}) }.map { |p|
+      queue.concat(free_neighbours(map, fighters, curr)
+        .reject! { |p| seen.includes?({p, orig}) }
+        .map do |p|
           seen << {p, orig}
           {p, orig, dist + 1}
-        }
+        end)
     end
   end
   if options.any?
@@ -61,7 +70,12 @@ def pathto(map, fighters, from : Pos, targets)
   end
 end
 
-def solve(input, map, strength)
+def elves(fighters)
+  fighters.values.count &.t.==('E')
+end
+
+def solve(input, strength)
+  map = Hash(Pos, Char).new
   fighters = Hash(Pos, Actor).new
   input.lines.each_with_index do |l, x|
     l.chars.each_with_index do |c, y|
@@ -73,30 +87,27 @@ def solve(input, map, strength)
       end
     end
   end
+  original_elves = elves(fighters)
 
-  bt = fighters.group_by &.last.t
-  size = bt['E'].size
   (0..Int32::MAX).each do |i|
     fighters.to_a.sort_by(&.first).each do |pos, actor|
       next unless fighters[pos]? == actor # DEAD
-      targets = neighbours(fighters, pos, actor.t == 'G' ? 'E' : 'G')
-      enemies = enemies(fighters, actor.t)
-      if enemies.empty?
-        puts "part1 #{fighters.values.sum(&.hp) * i}" if strength == 3
-        bt = fighters.group_by &.last.t
-        done = bt['E']? && bt['E'].size == size
-        puts "part2 #{fighters.values.sum(&.hp) * i}" if done
-        return done
-      end
-      in_range = enemies.flat_map { |p, _| free_neighbours(map, fighters, p) }
-      next if targets.empty? && in_range.empty?
-
+      targets = adjacent_enemies(fighters, pos, actor)
       if targets.empty?
-        if step = pathto(map, fighters, pos, in_range)
+        enemies = enemies(fighters, actor.t)
+        if enemies.empty?
+          puts "part1 #{fighters.values.sum(&.hp) * i}" if strength == 3
+          done = elves(fighters) == original_elves
+          puts "part2 #{fighters.values.sum(&.hp) * i}" if done
+          return done
+        end
+        reachable = enemies.flat_map { |p, _| free_neighbours(map, fighters, p) }
+        next if targets.empty? && reachable.empty?
+        if step = pathto(map, fighters, pos, reachable)
           fighters.delete pos
           fighters[step] = actor
           pos = step
-          targets = neighbours(fighters, step, actor.t == 'G' ? 'E' : 'G')
+          targets = adjacent_enemies(fighters, step, actor)
         end
       end
       next if targets.empty?
@@ -110,5 +121,5 @@ def solve(input, map, strength)
   end
 end
 
-solve input, map, 3
-(4..Int32::MAX).find { |i| solve input, map, i }
+solve input, 3
+(4..Int32::MAX).find { |i| solve input, i }
