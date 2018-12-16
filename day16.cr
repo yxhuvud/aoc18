@@ -34,11 +34,10 @@ end
 
 matches = 0
 start_of_code = 0
-op_to_code = Hash(String, Int32).new
 code_to_op = Hash(Int32, String).new
 
 i = 0
-while op_to_code.size < 16
+while code_to_op.size < 16
   input.each_slice(4) do |(before, op, after, _)|
     break unless before.match(/Before/)
     start_of_code += 4
@@ -51,10 +50,9 @@ while op_to_code.size < 16
         alts << {{ ins }}
       end
     {% end %}
-    new_alts = alts - op_to_code.keys
+    new_alts = alts - code_to_op.values
     if new_alts.size == 1
       code_to_op[op[0]] = new_alts.first
-      op_to_code[new_alts.first] = op[0]
     end
     matches += 1 if alts.size > 2
   end
