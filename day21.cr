@@ -36,8 +36,7 @@ ip = 4
 
 def run(program, regs, ip)
   seen = Set(Int32).new
-  prev = -1
-  while true
+  loop do
     op = program[regs[ip]]
     {% begin %}
       case op[0]
