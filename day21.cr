@@ -2,9 +2,10 @@ input = File.read "day21.input"
 program = input
   .lines[1..-1]
   .map(&.split)
-  .map { |row| {row[0], row[1].to_i, row[2].to_i, row[3].to_i} }
+  .map { |row| {Instructions.index(row[0]), row[1].to_i, row[2].to_i, row[3].to_i} }
 
 Instructions = %w(addr addi mulr muli banr bani borr bori setr seti gtir gtri gtrr eqir eqri eqrr)
+
 macro addr(reg) {{reg}}[op[1]] + {{reg}}[op[2]] end
 macro addi(reg) {{reg}}[op[1]] + op[2] end
 macro mulr(reg) {{reg}}[op[1]] * {{reg}}[op[2]] end
@@ -40,8 +41,8 @@ def run(program, regs, ip)
     op = program[regs[ip]]
     {% begin %}
       case op[0]
-          {% for ins in Instructions %}
-          when {{ins}}
+          {% for ins, index in Instructions %}
+          when {{index}}
             regs[op[3]] = {{ ins.id }}(regs)
           {% end %}
       end
