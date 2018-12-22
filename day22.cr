@@ -3,16 +3,6 @@ TARGET = {8, 713}
 
 alias Pos = Tuple(Int32, Int32)
 
-def num_to_type(num)
-  case num % 3
-  when 0 then '.'
-  when 1 then '='
-  when 2 then '|'
-  else
-    raise "unreachable"
-  end
-end
-
 def calc(map, x, y)
   geologic =
     case {x, y}
@@ -88,26 +78,12 @@ loop do
     break
   end
   neighs = neighbours(map, state)
-  neighs.reject! do |s|
-    if v = seen[{s[0], s[1]}]?
-      if v <= s[2]
-        true
-      else
-        seen[{s[0], s[1]}] = s[2]
-        false
-      end
-    else
-      seen[{s[0], s[1]}] = s[2]
-      false
-    end
-  end
+    .reject! { |s| (v = seen[{s[0], s[1]}]?) && v <= s[2] }
   # sigh. It would be nice to have access to a priority queue :&
   neighs.each do |s|
-    estimate = estimate(map, s)
+    seen[{s[0], s[1]}] = s[2]
     entry = {s, estimate(map, s)}
-    index = queue.bsearch_index do |(_, e)|
-      e > estimate
-    end
+    index = queue.bsearch_index { |(_, e)| e > entry[1] }
     if index
       queue.insert(index, entry)
     else
