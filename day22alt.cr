@@ -30,7 +30,7 @@ end
 map = build_map(TARGET[0], TARGET[1])
 
 puts "Part1:"
-p map.values.sum { |v| v % 3 }
+p map.values.sum &.%(3)
 
 enum Equipped
   None
@@ -62,29 +62,25 @@ end
 def estimate(map, state)
   pos, equipped, cost = state
   dist = (TARGET[0] - pos[0]).abs + (TARGET[1] - pos[1]).abs
-  dist + cost # adding cost to switch to Torch make it worse.
+  dist + cost # adding cost to switch to Torch make it perform worse.
 end
 
 queue = PriorityQueue(Cost, State).new
 start = { {0, 0}, Equipped::Torch, 0 }
 queue.insert(start, estimate(map, start))
-seen = Hash(Tuple(Pos, Equipped), Cost).new
-seen[{ {0, 0}, Equipped::Torch }] = 0
+seen = { { {0, 0}, Equipped::Torch } => 0 }
 
-res = -1
 while state = queue.pull
   pos, equipped, cost = state
   if pos == TARGET && equipped == Equipped::Torch
-    res = cost
-    break
+    puts "part2"
+    p cost
+    exit
   end
-  neighs = neighbours(map, state)
-    .reject! { |s| (v = seen[{s[0], s[1]}]?) && v <= s[2] }
-  neighs.each do |s|
+  neighbours(map, state).each do |s|
+    next if (v = seen[{s[0], s[1]}]?) && v <= s[2]
     seen[{s[0], s[1]}] = s[2]
     queue.insert(s, estimate(map, s))
   end
 end
 
-puts "part2"
-p res

@@ -28,7 +28,7 @@ end
 map = build_map(TARGET[0], TARGET[1])
 
 puts "Part1:"
-p map.values.sum { |v| v % 3 }
+p map.values.sum &.%(3)
 
 enum Equipped
   None
@@ -66,23 +66,21 @@ end
 queue = Array({State, Cost}).new
 start = { {0, 0}, Equipped::Torch, 0 }
 queue << {start, estimate(map, start)}
-seen = Hash(Tuple(Pos, Equipped), Cost).new
-seen[{ {0, 0}, Equipped::Torch }] = 0
+seen = { { {0, 0}, Equipped::Torch } => 0 }
 
-res = -1
 loop do
   state, estimate = queue.shift
   pos, equipped, cost = state
   if pos == TARGET && equipped == Equipped::Torch
-    res = cost
-    break
+    puts "part2"
+    p cost
+    exit
   end
-  neighs = neighbours(map, state)
-    .reject! { |s| (v = seen[{s[0], s[1]}]?) && v <= s[2] }
-  # sigh. It would be nice to have access to a priority queue :&
-  neighs.each do |s|
+  neighbours(map, state).each do |s|
+    next if (v = seen[{s[0], s[1]}]?) && v <= s[2]
     seen[{s[0], s[1]}] = s[2]
     entry = {s, estimate(map, s)}
+    # sigh. It would be nice to have access to a priority queue :&
     index = queue.bsearch_index { |(_, e)| e > entry[1] }
     if index
       queue.insert(index, entry)
@@ -91,6 +89,3 @@ loop do
     end
   end
 end
-
-puts "part2"
-p res
