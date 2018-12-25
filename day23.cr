@@ -17,6 +17,9 @@ def overlaps(pos, range, bots)
   bots.count { |b| dist(pos, b) <= b[3] + range }
 end
 
+# Stars was origally gotten by using a SAT solver on the problem.
+# Props to @dyr-el for showing how to do it better. I have no idea if
+# this actually works for all input, but it works for mine :D
 minx = bots.min_of { |b| b[0] - b[3] }
 maxx = bots.max_of { |b| b[0] + b[3] }
 miny = bots.min_of { |b| b[1] - b[3] }
